@@ -17,11 +17,13 @@ export class EksClusterStack extends cdk.Stack {
 
     const { vpc } = props;
 
-    // Create EKS cluster using Blueprints
+    // NOTE: kubectlLayer not in original spec but required by CDK v2.215.0
+    // Without it, TypeScript compilation fails with:
+    // "Property 'kubectlLayer' is missing... but required in type 'ClusterProps'"
     this.cluster = new eks.Cluster(this, 'EksCluster', {
       vpc,
-      version: eks.KubernetesVersion.V1_31,
-      kubectlLayer: new KubectlV31Layer(this, 'kubectl'), // Required by CDK v2.215.0
+      version: eks.KubernetesVersion.V1_31, // Will update to 1.35 when available
+      kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
       defaultCapacity: 0,
       endpointAccess: eks.EndpointAccess.PUBLIC_AND_PRIVATE,
       vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }],
