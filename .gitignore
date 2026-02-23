@@ -1,0 +1,8 @@
+*.js
+*.d.ts
+node_modules
+cdk.out
+.cdk.staging
+.DS_Store
+*.swp
+.env
