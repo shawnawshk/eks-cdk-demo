@@ -40,18 +40,16 @@ export class EksAddonsStack extends cdk.Stack {
     // EBS CSI Driver with IRSA
     // Create IAM role for EBS CSI Driver using IRSA
     const ebsCsiRole = new iam.Role(this, 'EbsCsiDriverRole', {
-      assumedBy: new iam.FederatedPrincipal(
-        cluster.openIdConnectProvider.openIdConnectProviderArn,
-        {
-          StringEquals: {
+      assumedBy: new iam.OpenIdConnectPrincipal(cluster.openIdConnectProvider).withConditions({
+        StringEquals: new cdk.CfnJson(this, 'EbsCsiCondition', {
+          value: {
             [`${cluster.openIdConnectProvider.openIdConnectProviderIssuer}:sub`]:
               'system:serviceaccount:kube-system:ebs-csi-controller-sa',
             [`${cluster.openIdConnectProvider.openIdConnectProviderIssuer}:aud`]:
               'sts.amazonaws.com',
           },
-        },
-        'sts:AssumeRoleWithWebIdentity'
-      ),
+        }),
+      }),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonEBSCSIDriverPolicy'),
       ],
