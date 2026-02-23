@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as eks from 'aws-cdk-lib/aws-eks';
+import * as blueprints from '@aws-quickstart/eks-blueprints';
 import { KubectlV31Layer } from '@aws-cdk/lambda-layer-kubectl-v31';
 import { Construct } from 'constructs';
 
@@ -16,11 +17,11 @@ export class EksClusterStack extends cdk.Stack {
 
     const { vpc } = props;
 
-    // Create EKS cluster
+    // Create EKS cluster using Blueprints
     this.cluster = new eks.Cluster(this, 'EksCluster', {
       vpc,
       version: eks.KubernetesVersion.V1_31,
-      kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
+      kubectlLayer: new KubectlV31Layer(this, 'kubectl'), // Required by CDK v2.215.0
       defaultCapacity: 0,
       endpointAccess: eks.EndpointAccess.PUBLIC_AND_PRIVATE,
       vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }],
@@ -35,6 +36,7 @@ export class EksClusterStack extends cdk.Stack {
       desiredSize: 2,
       amiType: eks.NodegroupAmiType.AL2023_X86_64_STANDARD,
       diskSize: 100,
+      nodeRole: undefined, // Let CDK create the role
     });
 
     // Outputs
