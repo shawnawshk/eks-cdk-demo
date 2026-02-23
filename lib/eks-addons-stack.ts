@@ -112,7 +112,8 @@ export class EksAddonsStack extends cdk.Stack {
     );
 
     // Deploy AWS Load Balancer Controller via Helm
-    const albController = cluster.addHelmChart('AwsLoadBalancerController', {
+    const albController = new eks.HelmChart(this, 'AwsLoadBalancerController', {
+      cluster,
       chart: 'aws-load-balancer-controller',
       repository: 'https://aws.github.io/eks-charts',
       namespace: 'kube-system',
@@ -131,7 +132,8 @@ export class EksAddonsStack extends cdk.Stack {
     });
 
     // Metrics Server
-    cluster.addHelmChart('MetricsServer', {
+    new eks.HelmChart(this, 'MetricsServer', {
+      cluster,
       chart: 'metrics-server',
       repository: 'https://kubernetes-sigs.github.io/metrics-server/',
       namespace: 'kube-system',
