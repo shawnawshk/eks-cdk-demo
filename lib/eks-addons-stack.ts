@@ -66,18 +66,16 @@ export class EksAddonsStack extends cdk.Stack {
     // AWS Load Balancer Controller
     // Create IAM role for AWS Load Balancer Controller using IRSA
     const albControllerRole = new iam.Role(this, 'AlbControllerRole', {
-      assumedBy: new iam.FederatedPrincipal(
-        cluster.openIdConnectProvider.openIdConnectProviderArn,
-        {
-          StringEquals: {
+      assumedBy: new iam.OpenIdConnectPrincipal(cluster.openIdConnectProvider).withConditions({
+        StringEquals: new cdk.CfnJson(this, 'AlbControllerCondition', {
+          value: {
             [`${cluster.openIdConnectProvider.openIdConnectProviderIssuer}:sub`]:
               'system:serviceaccount:kube-system:aws-load-balancer-controller',
             [`${cluster.openIdConnectProvider.openIdConnectProviderIssuer}:aud`]:
               'sts.amazonaws.com',
           },
-        },
-        'sts:AssumeRoleWithWebIdentity'
-      ),
+        }),
+      }),
     });
 
     // Attach AWS Load Balancer Controller policy
