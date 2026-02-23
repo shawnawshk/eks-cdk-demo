@@ -18,7 +18,7 @@ export class EksAddonsStack extends cdk.Stack {
       clusterName: cluster.clusterName,
       addonName: 'vpc-cni',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.18.1-eksbuild.1', // Update to latest compatible version
+      addonVersion: 'v1.21.1-eksbuild.3',
     });
 
     // CoreDNS Addon
@@ -26,7 +26,7 @@ export class EksAddonsStack extends cdk.Stack {
       clusterName: cluster.clusterName,
       addonName: 'coredns',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.11.1-eksbuild.4', // Update to latest compatible version
+      addonVersion: 'v1.11.4-eksbuild.28',
     });
 
     // kube-proxy Addon
@@ -34,24 +34,27 @@ export class EksAddonsStack extends cdk.Stack {
       clusterName: cluster.clusterName,
       addonName: 'kube-proxy',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.31.0-eksbuild.1', // Update to 1.35.x when available
+      addonVersion: 'v1.31.14-eksbuild.2',
     });
 
-    // EBS CSI Driver with Pod Identity
-    // Create IAM role for EBS CSI Driver using Pod Identity
+    // EBS CSI Driver with IRSA
+    // Create IAM role for EBS CSI Driver using IRSA
     const ebsCsiRole = new iam.Role(this, 'EbsCsiDriverRole', {
-      assumedBy: new iam.ServicePrincipal('pods.eks.amazonaws.com'),
+      assumedBy: new iam.FederatedPrincipal(
+        cluster.openIdConnectProvider.openIdConnectProviderArn,
+        {
+          StringEquals: {
+            [`${cluster.openIdConnectProvider.openIdConnectProviderIssuer}:sub`]:
+              'system:serviceaccount:kube-system:ebs-csi-controller-sa',
+            [`${cluster.openIdConnectProvider.openIdConnectProviderIssuer}:aud`]:
+              'sts.amazonaws.com',
+          },
+        },
+        'sts:AssumeRoleWithWebIdentity'
+      ),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonEBSCSIDriverPolicy'),
       ],
-    });
-
-    // Create Pod Identity Association
-    new eks.CfnPodIdentityAssociation(this, 'EbsCsiPodIdentity', {
-      clusterName: cluster.clusterName,
-      namespace: 'kube-system',
-      serviceAccount: 'ebs-csi-controller-sa',
-      roleArn: ebsCsiRole.roleArn,
     });
 
     // EBS CSI Driver Addon
@@ -59,7 +62,7 @@ export class EksAddonsStack extends cdk.Stack {
       clusterName: cluster.clusterName,
       addonName: 'aws-ebs-csi-driver',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.37.0-eksbuild.1', // Update to latest compatible version
+      addonVersion: 'v1.55.0-eksbuild.2',
       serviceAccountRoleArn: ebsCsiRole.roleArn,
     });
 
