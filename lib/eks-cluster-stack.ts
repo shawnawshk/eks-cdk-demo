@@ -77,5 +77,10 @@ export class EksClusterStack extends cdk.Stack {
       value: this.cluster.kubectlRole?.roleArn ?? 'N/A',
       description: 'kubectl Role ARN',
     });
+
+    new cdk.CfnOutput(this, 'ConfigCommand', {
+      value: `aws eks update-kubeconfig --name ${this.cluster.clusterName} --region ${cdk.Stack.of(this).region}`,
+      description: 'Command to configure kubectl',
+    });
   }
 }
