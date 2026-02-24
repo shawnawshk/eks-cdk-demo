@@ -3,7 +3,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as eks from 'aws-cdk-lib/aws-eks';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as blueprints from '@aws-quickstart/eks-blueprints';
-import { KubectlV31Layer } from '@aws-cdk/lambda-layer-kubectl-v31';
+import { KubectlV35Layer } from '@aws-cdk/lambda-layer-kubectl-v35';
 import { Construct } from 'constructs';
 
 export interface EksClusterStackProps extends cdk.StackProps {
@@ -23,8 +23,8 @@ export class EksClusterStack extends cdk.Stack {
     // "Property 'kubectlLayer' is missing... but required in type 'ClusterProps'"
     this.cluster = new eks.Cluster(this, 'EksCluster', {
       vpc,
-      version: eks.KubernetesVersion.V1_31, // Will update to 1.35 when available
-      kubectlLayer: new KubectlV31Layer(this, 'kubectl'),
+      version: eks.KubernetesVersion.of('1.35'),
+      kubectlLayer: new KubectlV35Layer(this, 'kubectl'),
       defaultCapacity: 0,
       endpointAccess: eks.EndpointAccess.PUBLIC_AND_PRIVATE,
       vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }],

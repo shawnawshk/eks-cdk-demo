@@ -26,7 +26,7 @@ export class EksAddonsStack extends cdk.Stack {
       clusterName: cluster.clusterName,
       addonName: 'coredns',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.11.4-eksbuild.28',
+      addonVersion: 'v1.13.2-eksbuild.1',
     });
 
     // kube-proxy Addon
@@ -34,7 +34,7 @@ export class EksAddonsStack extends cdk.Stack {
       clusterName: cluster.clusterName,
       addonName: 'kube-proxy',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.31.14-eksbuild.2',
+      addonVersion: 'v1.35.0-eksbuild.2',
     });
 
     // EBS CSI Driver with IRSA
