@@ -96,7 +96,30 @@ aws sts get-caller-identity
 cdk bootstrap aws://<ACCOUNT-ID>/<REGION>
 ```
 
-### 5. Deploy Infrastructure
+### 5. Configure Cluster Access (Optional)
+
+Grant your IAM role/user kubectl access by setting the admin role ARN:
+
+**Option 1: Using CDK Context**
+```bash
+cdk deploy EksClusterStack -c adminRoleArn=arn:aws:iam::123456789012:role/YourRoleName
+```
+
+**Option 2: Using Environment Variable**
+```bash
+export ADMIN_ROLE_ARN=arn:aws:iam::123456789012:role/YourRoleName
+cdk deploy EksClusterStack
+```
+
+**Option 3: Find Your Current Role**
+```bash
+aws sts get-caller-identity --query Arn --output text
+# Use the role ARN from the output
+```
+
+**Note**: The cluster creator role automatically gets admin access. Additional roles are optional.
+
+### 6. Deploy Infrastructure
 
 Deploy all three stacks:
 
@@ -114,7 +137,7 @@ cdk deploy EksAddonsStack
 
 **Note**: The deployment takes approximately 15-20 minutes (mostly EKS cluster creation).
 
-### 6. Configure kubectl
+### 7. Configure kubectl
 
 After deployment, the output will show the configuration command:
 
@@ -122,7 +145,7 @@ After deployment, the output will show the configuration command:
 aws eks update-kubeconfig --name eks-blueprints-cluster --region us-east-1
 ```
 
-### 7. Verify Cluster
+### 8. Verify Cluster
 
 ```bash
 # Check nodes
@@ -224,7 +247,24 @@ desiredSize: 3,
 
 ### Add IAM Access
 
-Edit `lib/eks-cluster-stack.ts` to grant additional IAM roles/users:
+**Method 1: Using CDK Context (Recommended)**
+
+No code changes needed! Just pass the role ARN during deployment:
+
+```bash
+cdk deploy EksClusterStack -c adminRoleArn=arn:aws:iam::123456789012:role/YourRole
+```
+
+**Method 2: Using Environment Variable**
+
+```bash
+export ADMIN_ROLE_ARN=arn:aws:iam::123456789012:role/YourRole
+cdk deploy EksClusterStack
+```
+
+**Method 3: Hardcode in Code (Not Recommended)**
+
+If you absolutely need to hardcode, edit `lib/eks-cluster-stack.ts`:
 
 ```typescript
 const yourRole = iam.Role.fromRoleArn(
@@ -238,6 +278,11 @@ this.cluster.awsAuth.addRoleMapping(yourRole, {
   groups: ['system:masters'],
   username: 'your-user',
 });
+```
+
+**Find Your Current Role:**
+```bash
+aws sts get-caller-identity --query Arn --output text
 ```
 
 ## 💰 Cost Estimation
@@ -308,7 +353,16 @@ If you see: `error: You must be logged in to the server`
    aws eks update-kubeconfig --name eks-blueprints-cluster --region us-east-1
    ```
 
-3. Check if your IAM role is mapped in the cluster (see Customization section)
+3. Grant your IAM role cluster access:
+   ```bash
+   # Get your current role ARN
+   aws sts get-caller-identity --query Arn --output text
+
+   # Redeploy with your role
+   cdk deploy EksClusterStack -c adminRoleArn=YOUR_ROLE_ARN
+   ```
+
+**Note**: The cluster creator role automatically has access. If you're using a different role/user, you must explicitly grant access.
 
 ### Pods in Pending state
 

@@ -42,19 +42,32 @@ export class EksClusterStack extends cdk.Stack {
       nodeRole: undefined, // Let CDK create the role
     });
 
-    // Grant current IAM role access to the cluster
-    // This allows the current IAM user/role to access the cluster with kubectl
-    const coderRole = iam.Role.fromRoleArn(
-      this,
-      'CoderRole',
-      'arn:aws:iam::050451400022:role/coder-instance-role-20260114132413020100000001',
-      { mutable: false }
-    );
+    // Grant additional IAM principals access to the cluster
+    // You can configure this via CDK context or environment variable
+    // Option 1: cdk deploy -c adminRoleArn=arn:aws:iam::ACCOUNT:role/ROLE_NAME
+    // Option 2: export ADMIN_ROLE_ARN=arn:aws:iam::ACCOUNT:role/ROLE_NAME
+    const adminRoleArn =
+      this.node.tryGetContext('adminRoleArn') ||
+      process.env.ADMIN_ROLE_ARN;
 
-    this.cluster.awsAuth.addRoleMapping(coderRole, {
-      groups: ['system:masters'],
-      username: 'coder-instance',
-    });
+    if (adminRoleArn) {
+      const adminRole = iam.Role.fromRoleArn(
+        this,
+        'AdminRole',
+        adminRoleArn,
+        { mutable: false }
+      );
+
+      this.cluster.awsAuth.addRoleMapping(adminRole, {
+        groups: ['system:masters'],
+        username: 'cluster-admin',
+      });
+
+      new cdk.CfnOutput(this, 'AdminRoleArn', {
+        value: adminRoleArn,
+        description: 'IAM Role granted cluster admin access',
+      });
+    }
 
     // Outputs
     new cdk.CfnOutput(this, 'ClusterName', {
