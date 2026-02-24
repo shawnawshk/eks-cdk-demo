@@ -48,13 +48,15 @@ This project uses a modular approach with three interdependent CloudFormation st
 - **Access**: IAM role mapping for kubectl access
 
 #### 3. EksAddonsStack
-Six core addons with IRSA (IAM Roles for Service Accounts):
-- **VPC CNI** (v1.21.1): Pod networking
-- **CoreDNS** (v1.13.2): DNS resolution
-- **kube-proxy** (v1.35.0): Network proxy
-- **EBS CSI Driver** (v1.55.0): Persistent storage with IRSA
-- **AWS Load Balancer Controller** (v3.0.0): ALB/NLB integration with IRSA
-- **Metrics Server** (v0.8.0): Resource metrics
+Six core addons (AWS managed addons automatically use the default/recommended version for K8s 1.35):
+- **VPC CNI**: Pod networking (AWS managed addon)
+- **CoreDNS**: DNS resolution (AWS managed addon)
+- **kube-proxy**: Network proxy (AWS managed addon)
+- **EBS CSI Driver**: Persistent storage with IRSA (AWS managed addon)
+- **AWS Load Balancer Controller**: ALB/NLB integration with IRSA (Helm chart)
+- **Metrics Server**: Resource metrics (AWS managed addon)
+
+> **Note**: Addon versions are automatically managed by AWS and will use the default recommended version compatible with your Kubernetes version. This ensures you always get tested, compatible versions without manual version tracking.
 
 ## 📋 Prerequisites
 

@@ -14,11 +14,11 @@ export class EksAddonsStack extends cdk.Stack {
     const { cluster } = props;
 
     // VPC CNI Addon
+    // Note: Omitting addonVersion uses the default recommended version for the cluster's K8s version
     new eks.CfnAddon(this, 'VpcCniAddon', {
       clusterName: cluster.clusterName,
       addonName: 'vpc-cni',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.21.1-eksbuild.3',
     });
 
     // CoreDNS Addon
@@ -26,7 +26,6 @@ export class EksAddonsStack extends cdk.Stack {
       clusterName: cluster.clusterName,
       addonName: 'coredns',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.13.2-eksbuild.1',
     });
 
     // kube-proxy Addon
@@ -34,7 +33,6 @@ export class EksAddonsStack extends cdk.Stack {
       clusterName: cluster.clusterName,
       addonName: 'kube-proxy',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.35.0-eksbuild.2',
     });
 
     // EBS CSI Driver with IRSA
@@ -60,7 +58,6 @@ export class EksAddonsStack extends cdk.Stack {
       clusterName: cluster.clusterName,
       addonName: 'aws-ebs-csi-driver',
       resolveConflicts: 'OVERWRITE',
-      addonVersion: 'v1.55.0-eksbuild.2',
       serviceAccountRoleArn: ebsCsiRole.roleArn,
     });
 
@@ -131,16 +128,11 @@ export class EksAddonsStack extends cdk.Stack {
       },
     });
 
-    // Metrics Server
-    new eks.HelmChart(this, 'MetricsServer', {
-      cluster,
-      chart: 'metrics-server',
-      release: 'metrics-server',
-      repository: 'https://kubernetes-sigs.github.io/metrics-server/',
-      namespace: 'kube-system',
-      values: {
-        args: ['--kubelet-insecure-tls', '--kubelet-preferred-address-types=InternalIP'],
-      },
+    // Metrics Server (AWS Managed Addon)
+    new eks.CfnAddon(this, 'MetricsServerAddon', {
+      clusterName: cluster.clusterName,
+      addonName: 'metrics-server',
+      resolveConflicts: 'OVERWRITE',
     });
 
     // Outputs
