@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as eks from 'aws-cdk-lib/aws-eks';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as blueprints from '@aws-quickstart/eks-blueprints';
 import { KubectlV31Layer } from '@aws-cdk/lambda-layer-kubectl-v31';
 import { Construct } from 'constructs';
@@ -39,6 +40,20 @@ export class EksClusterStack extends cdk.Stack {
       amiType: eks.NodegroupAmiType.AL2023_X86_64_STANDARD,
       diskSize: 100,
       nodeRole: undefined, // Let CDK create the role
+    });
+
+    // Grant Admin role access to the cluster
+    // This allows the current IAM user/role to access the cluster with kubectl
+    const adminRole = iam.Role.fromRoleArn(
+      this,
+      'AdminRole',
+      'arn:aws:iam::985955614379:role/Admin',
+      { mutable: false }
+    );
+
+    this.cluster.awsAuth.addRoleMapping(adminRole, {
+      groups: ['system:masters'],
+      username: 'admin-role',
     });
 
     // Outputs
