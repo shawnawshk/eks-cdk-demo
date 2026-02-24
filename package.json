@@ -21,6 +21,10 @@
     "typescript": "~5.3.3"
   },
   "dependencies": {
+    "@aws-cdk/lambda-layer-kubectl-v32": "^2.1.0",
+    "@aws-cdk/lambda-layer-kubectl-v33": "^2.0.1",
+    "@aws-cdk/lambda-layer-kubectl-v34": "^2.0.1",
+    "@aws-cdk/lambda-layer-kubectl-v35": "^2.0.0",
     "@aws-quickstart/eks-blueprints": "^1.15.1",
     "aws-cdk-lib": "^2.170.0",
     "constructs": "^10.3.0",
