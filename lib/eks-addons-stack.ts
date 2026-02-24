@@ -114,6 +114,7 @@ export class EksAddonsStack extends cdk.Stack {
     const albController = new eks.HelmChart(this, 'AwsLoadBalancerController', {
       cluster,
       chart: 'aws-load-balancer-controller',
+      release: 'aws-load-balancer-controller',
       repository: 'https://aws.github.io/eks-charts',
       namespace: 'kube-system',
       values: {
@@ -134,6 +135,7 @@ export class EksAddonsStack extends cdk.Stack {
     new eks.HelmChart(this, 'MetricsServer', {
       cluster,
       chart: 'metrics-server',
+      release: 'metrics-server',
       repository: 'https://kubernetes-sigs.github.io/metrics-server/',
       namespace: 'kube-system',
       values: {
