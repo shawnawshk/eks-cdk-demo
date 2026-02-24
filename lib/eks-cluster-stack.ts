@@ -42,18 +42,18 @@ export class EksClusterStack extends cdk.Stack {
       nodeRole: undefined, // Let CDK create the role
     });
 
-    // Grant Admin role access to the cluster
+    // Grant current IAM role access to the cluster
     // This allows the current IAM user/role to access the cluster with kubectl
-    const adminRole = iam.Role.fromRoleArn(
+    const coderRole = iam.Role.fromRoleArn(
       this,
-      'AdminRole',
-      'arn:aws:iam::985955614379:role/Admin',
+      'CoderRole',
+      'arn:aws:iam::050451400022:role/coder-instance-role-20260114132413020100000001',
       { mutable: false }
     );
 
-    this.cluster.awsAuth.addRoleMapping(adminRole, {
+    this.cluster.awsAuth.addRoleMapping(coderRole, {
       groups: ['system:masters'],
-      username: 'admin-role',
+      username: 'coder-instance',
     });
 
     // Outputs
