@@ -1,109 +1,373 @@
-# EKS Blueprints CDK Project
+# EKS CDK Demo
 
-AWS CDK project for deploying an EKS cluster with core addons using EKS Blueprints.
+[![AWS](https://img.shields.io/badge/AWS-EKS-FF9900?logo=amazon-aws)](https://aws.amazon.com/eks/)
+[![CDK](https://img.shields.io/badge/AWS-CDK-FF9900?logo=amazon-aws)](https://aws.amazon.com/cdk/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.35-326CE5?logo=kubernetes)](https://kubernetes.io/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 
-## Architecture
+Production-ready AWS CDK project for deploying Amazon EKS clusters with core addons using a modular three-stack architecture.
 
-- **VpcStack**: VPC with 2 AZs, public/private subnets
-- **EksClusterStack**: EKS 1.31 cluster with managed node group (2x t3.medium, AL2023)
-- **EksAddonsStack**: Core addons (VPC CNI, CoreDNS, kube-proxy, EBS CSI, ALB Controller, Metrics Server)
+## 🏗️ Architecture
 
-## Prerequisites
+This project uses a modular approach with three interdependent CloudFormation stacks:
 
-- Node.js 18+
-- AWS CLI v2 configured
-- AWS CDK CLI: `npm install -g aws-cdk`
-- kubectl
-
-## Deployment
-
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Bootstrap CDK (first time only):
-   ```bash
-   cdk bootstrap
-   ```
-
-3. Deploy all stacks:
-   ```bash
-   cdk deploy --all
-   ```
-
-4. Configure kubectl:
-   ```bash
-   aws eks update-kubeconfig --name eks-blueprints-cluster --region <region>
-   ```
-
-5. Verify cluster:
-   ```bash
-   kubectl get nodes
-   kubectl get pods -n kube-system
-   ```
-
-## Testing
-
-Deploy sample nginx app:
-```bash
-kubectl apply -f examples/sample-app.yaml
-kubectl port-forward service/nginx-service 8080:80
-curl localhost:8080
+```
+┌─────────────┐
+│  VpcStack   │
+│  (Network)  │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────┐
+│ EksClusterStack │
+│  (K8s 1.35)     │
+└────────┬────────┘
+         │
+         ▼
+┌────────────────┐
+│ EksAddonsStack │
+│   (6 Addons)   │
+└────────────────┘
 ```
 
-## Cleanup
+### Stack Components
+
+#### 1. VpcStack
+- VPC with CIDR 10.0.0.0/16
+- 2 Availability Zones for high availability
+- Public subnets (/24) with Internet Gateway
+- Private subnets (/19) with NAT Gateways
+- Proper EKS subnet tagging for load balancer integration
+
+#### 2. EksClusterStack
+- **Kubernetes Version**: 1.35 (latest)
+- **AMI**: Amazon Linux 2023 (AL2023_X86_64_STANDARD)
+- **Node Group**: 2x t3.medium instances
+- **Storage**: 100GB EBS per node
+- **Networking**: Private subnets with public + private endpoint access
+- **Access**: IAM role mapping for kubectl access
+
+#### 3. EksAddonsStack
+Six core addons with IRSA (IAM Roles for Service Accounts):
+- **VPC CNI** (v1.21.1): Pod networking
+- **CoreDNS** (v1.13.2): DNS resolution
+- **kube-proxy** (v1.35.0): Network proxy
+- **EBS CSI Driver** (v1.55.0): Persistent storage with IRSA
+- **AWS Load Balancer Controller** (v3.0.0): ALB/NLB integration with IRSA
+- **Metrics Server** (v0.8.0): Resource metrics
+
+## 📋 Prerequisites
+
+- **Node.js**: 18+ ([Download](https://nodejs.org/))
+- **AWS CLI**: v2 configured with credentials ([Setup Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
+- **AWS CDK CLI**:
+  ```bash
+  npm install -g aws-cdk
+  ```
+- **kubectl**: ([Installation Guide](https://kubernetes.io/docs/tasks/tools/))
+- **Helm** (optional): For managing additional charts ([Installation Guide](https://helm.sh/docs/intro/install/))
+
+## 🚀 Quick Start
+
+### 1. Clone the Repository
 
 ```bash
-# Delete sample app first
-kubectl delete -f examples/sample-app.yaml
+git clone https://github.com/shawnawshk/eks-cdk-demo.git
+cd eks-cdk-demo
+```
 
-# Destroy CDK stacks
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure AWS Credentials
+
+Ensure your AWS credentials are configured:
+
+```bash
+aws sts get-caller-identity
+```
+
+### 4. Bootstrap CDK (First Time Only)
+
+```bash
+cdk bootstrap aws://<ACCOUNT-ID>/<REGION>
+```
+
+### 5. Deploy Infrastructure
+
+Deploy all three stacks:
+
+```bash
+cdk deploy --all
+```
+
+Or deploy individually with dependencies:
+
+```bash
+cdk deploy VpcStack
+cdk deploy EksClusterStack
+cdk deploy EksAddonsStack
+```
+
+**Note**: The deployment takes approximately 15-20 minutes (mostly EKS cluster creation).
+
+### 6. Configure kubectl
+
+After deployment, the output will show the configuration command:
+
+```bash
+aws eks update-kubeconfig --name eks-blueprints-cluster --region us-east-1
+```
+
+### 7. Verify Cluster
+
+```bash
+# Check nodes
+kubectl get nodes
+
+# Check Kubernetes version
+kubectl version --short
+
+# Check all addons
+kubectl get pods -n kube-system
+
+# Check metrics
+kubectl top nodes
+```
+
+## 📁 Project Structure
+
+```
+eks-cdk-demo/
+├── bin/
+│   └── app.ts                    # CDK app entry point
+├── lib/
+│   ├── vpc-stack.ts              # VPC with public/private subnets
+│   ├── eks-cluster-stack.ts      # EKS cluster with managed node group
+│   └── eks-addons-stack.ts       # Core Kubernetes addons
+├── examples/
+│   └── sample-app.yaml           # Sample nginx deployment
+├── package.json                  # Node.js dependencies
+├── tsconfig.json                 # TypeScript configuration
+└── cdk.json                      # CDK configuration
+```
+
+## 🧪 Testing the Cluster
+
+### Deploy Sample Application
+
+```bash
+kubectl apply -f examples/sample-app.yaml
+```
+
+### Verify Deployment
+
+```bash
+kubectl get deployments
+kubectl get pods
+kubectl get services
+```
+
+### Test with Port Forward
+
+```bash
+kubectl port-forward service/nginx-service 8080:80
+```
+
+In another terminal:
+
+```bash
+curl http://localhost:8080
+```
+
+Expected output: nginx welcome page HTML.
+
+### Clean Up Sample App
+
+```bash
+kubectl delete -f examples/sample-app.yaml
+```
+
+## 🔧 Customization
+
+### Update Kubernetes Version
+
+Edit `lib/eks-cluster-stack.ts`:
+
+```typescript
+version: eks.KubernetesVersion.of('1.35'),
+kubectlLayer: new KubectlV35Layer(this, 'kubectl'),
+```
+
+Then update addon versions in `lib/eks-addons-stack.ts` for compatibility.
+
+### Change Instance Type
+
+Edit `lib/eks-cluster-stack.ts`:
+
+```typescript
+instanceTypes: [new ec2.InstanceType('t3.large')],
+```
+
+### Adjust Node Count
+
+Edit `lib/eks-cluster-stack.ts`:
+
+```typescript
+minSize: 2,
+maxSize: 5,
+desiredSize: 3,
+```
+
+### Add IAM Access
+
+Edit `lib/eks-cluster-stack.ts` to grant additional IAM roles/users:
+
+```typescript
+const yourRole = iam.Role.fromRoleArn(
+  this,
+  'YourRole',
+  'arn:aws:iam::ACCOUNT-ID:role/YourRoleName',
+  { mutable: false }
+);
+
+this.cluster.awsAuth.addRoleMapping(yourRole, {
+  groups: ['system:masters'],
+  username: 'your-user',
+});
+```
+
+## 💰 Cost Estimation
+
+Monthly costs (us-east-1 region):
+
+| Component | Cost |
+|-----------|------|
+| EKS Control Plane | ~$73/month |
+| 2x t3.medium nodes (730 hrs) | ~$60/month |
+| 2x NAT Gateways | ~$64/month |
+| EBS volumes (200GB gp3) | ~$16/month |
+| Data transfer | Variable |
+| **Estimated Total** | **~$213/month** |
+
+> **Note**: Costs vary by region and usage. Use [AWS Pricing Calculator](https://calculator.aws/) for accurate estimates.
+
+## 🧹 Cleanup
+
+To avoid ongoing charges, destroy all resources:
+
+```bash
+# Delete any workloads first
+kubectl delete all --all -n default
+
+# Destroy CDK stacks (in reverse order)
+cdk destroy EksAddonsStack
+cdk destroy EksClusterStack
+cdk destroy VpcStack
+```
+
+Or destroy all at once:
+
+```bash
 cdk destroy --all
 ```
 
-## Project Structure
+## 🔐 Security Best Practices
 
+- ✅ All nodes run in private subnets
+- ✅ IRSA (IAM Roles for Service Accounts) for addon authentication
+- ✅ Latest Amazon Linux 2023 AMI with security patches
+- ✅ Cluster endpoint has both public and private access
+- ✅ Network policies enabled via VPC CNI
+- ✅ Default security group configured properly
+
+### Additional Recommendations
+
+1. **Enable encryption**: Add KMS encryption for EBS volumes and secrets
+2. **Network policies**: Implement Kubernetes NetworkPolicies
+3. **Pod Security Standards**: Enforce PSS policies
+4. **Secrets management**: Use AWS Secrets Manager or HashiCorp Vault
+5. **Audit logging**: Enable CloudWatch Container Insights
+
+## 🐛 Troubleshooting
+
+### kubectl authentication error
+
+If you see: `error: You must be logged in to the server`
+
+1. Verify AWS credentials:
+   ```bash
+   aws sts get-caller-identity
+   ```
+
+2. Update kubeconfig:
+   ```bash
+   aws eks update-kubeconfig --name eks-blueprints-cluster --region us-east-1
+   ```
+
+3. Check if your IAM role is mapped in the cluster (see Customization section)
+
+### Pods in Pending state
+
+Check node resources:
+```bash
+kubectl describe nodes
+kubectl top nodes
 ```
-├── bin/
-│   └── app.ts              # CDK app entry point
-├── lib/
-│   ├── vpc-stack.ts        # VPC stack
-│   ├── eks-cluster-stack.ts # EKS cluster stack
-│   └── eks-addons-stack.ts # Addons stack
-├── examples/
-│   └── sample-app.yaml     # Sample nginx deployment
-└── docs/
-    └── plans/              # Design and implementation docs
+
+### Addon issues
+
+Check addon status:
+```bash
+kubectl get pods -n kube-system
+kubectl logs -n kube-system <pod-name>
 ```
 
-## Stack Dependencies
+## 🛣️ Roadmap
 
-```
-VpcStack → EksClusterStack → EksAddonsStack
-```
+- [ ] Multi-environment support (dev, staging, prod)
+- [ ] Cluster Autoscaler or Karpenter integration
+- [ ] External DNS for automatic Route53 updates
+- [ ] Secrets Store CSI Driver with AWS Secrets Manager
+- [ ] AWS CloudWatch Container Insights
+- [ ] ArgoCD for GitOps deployments
+- [ ] Velero for backup and disaster recovery
+- [ ] Istio or Linkerd service mesh
 
-## Addons Installed
+## 📚 Documentation
 
-- **VPC CNI**: Pod networking
-- **CoreDNS**: DNS resolution
-- **kube-proxy**: Network rules
-- **AWS Load Balancer Controller**: ALB/NLB integration (IRSA)
-- **EBS CSI Driver**: Persistent storage (Pod Identity)
-- **Metrics Server**: Resource metrics
+- [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/)
+- [Amazon EKS Best Practices](https://aws.github.io/aws-eks-best-practices/)
+- [EKS Blueprints](https://aws-quickstart.github.io/cdk-eks-blueprints/)
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
 
-## Estimated Costs
+## 🤝 Contributing
 
-- EKS Control Plane: ~$73/month
-- 2x t3.medium nodes: ~$60/month
-- NAT Gateways (2): ~$64/month
-- EBS volumes: ~$10/month
-- **Total: ~$207/month**
+Contributions are welcome! Please:
 
-## Future Enhancements
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- Multi-environment support (dev, staging, prod)
-- External DNS for automatic Route53 updates
-- Cluster Autoscaler or Karpenter
-- Secrets Store CSI Driver
-- ArgoCD for GitOps
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- AWS CDK Team for the excellent IaC framework
+- EKS Blueprints for CDK patterns and best practices
+- Kubernetes community for comprehensive documentation
+
+## 📧 Contact
+
+For questions or support, please open an issue on GitHub.
+
+---
+
+**Built with ❤️ using AWS CDK and TypeScript**

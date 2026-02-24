@@ -1,8 +1,32 @@
+# Compiled JavaScript files
 *.js
 *.d.ts
+
+# Dependencies
 node_modules
+
+# CDK
 cdk.out
 .cdk.staging
+
+# IDE
 .DS_Store
 *.swp
+.idea/
+.vscode/
+*.code-workspace
+
+# Environment variables
 .env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kubernetes
+*.kubeconfig
