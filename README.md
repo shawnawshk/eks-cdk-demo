@@ -178,9 +178,10 @@ eks-cdk-demo/
 │   ├── eks-cluster-stack.ts      # EKS cluster with managed node group
 │   └── eks-addons-stack.ts       # Core Kubernetes addons
 ├── examples/
-│   └── sample-app.yaml           # Sample nginx deployment
+│   └── manifests.yaml            # EKS Pod Identity demo application
 ├── docs/
-│   └── CLUSTER_ACCESS.md         # Cluster access configuration guide
+│   ├── CLUSTER_ACCESS.md         # Cluster access configuration guide
+│   └── EKS_POD_IDENTITY_DEMO.md  # EKS Pod Identity demonstration guide
 ├── package.json                  # Node.js dependencies
 ├── tsconfig.json                 # TypeScript configuration
 └── cdk.json                      # CDK configuration
@@ -195,38 +196,57 @@ eks-cdk-demo/
 
 ## 🧪 Testing the Cluster
 
-### Deploy Sample Application
+### EKS Pod Identity Demo
+
+This cluster includes a comprehensive demo that shows how to use **EKS Pod Identity** to grant AWS IAM permissions to Kubernetes workloads.
+
+The demo includes:
+- 📄 Sample Kubernetes manifests (`examples/manifests.yaml`)
+- 🎯 Complete step-by-step walkthrough
+- ✅ Testing and verification procedures
+- 🔍 Troubleshooting guide
+- 🚀 Advanced use cases (cross-account, session tags)
+
+**👉 See the full guide:** [docs/EKS_POD_IDENTITY_DEMO.md](docs/EKS_POD_IDENTITY_DEMO.md)
+
+### Quick Start
 
 ```bash
-kubectl apply -f examples/sample-app.yaml
+# 1. Create IAM role with Pod Identity trust policy
+aws iam create-role --role-name eks-pod-identity-s3-reader ...
+
+# 2. Create pod identity association
+aws eks create-pod-identity-association \
+  --cluster-name eks-blueprints-cluster \
+  --namespace pod-identity-demo \
+  --service-account s3-reader-sa \
+  --role-arn arn:aws:iam::ACCOUNT:role/eks-pod-identity-s3-reader
+
+# 3. Deploy demo application
+kubectl apply -f examples/manifests.yaml
+
+# 4. Test AWS access from the pod
+kubectl exec -it -n pod-identity-demo POD_NAME -- aws sts get-caller-identity
 ```
 
-### Verify Deployment
+**For complete instructions, see:** [EKS Pod Identity Demo Guide](docs/EKS_POD_IDENTITY_DEMO.md)
+
+### Verify Cluster Components
+
+Check that all core components are running:
 
 ```bash
-kubectl get deployments
-kubectl get pods
-kubectl get services
-```
+# Check nodes
+kubectl get nodes
 
-### Test with Port Forward
+# Check core addons in kube-system
+kubectl get pods -n kube-system
 
-```bash
-kubectl port-forward service/nginx-service 8080:80
-```
+# Verify Pod Identity Agent is running
+kubectl get pods -n kube-system -l app.kubernetes.io/name=eks-pod-identity-agent
 
-In another terminal:
-
-```bash
-curl http://localhost:8080
-```
-
-Expected output: nginx welcome page HTML.
-
-### Clean Up Sample App
-
-```bash
-kubectl delete -f examples/sample-app.yaml
+# Check addon versions
+kubectl get daemonset -n kube-system
 ```
 
 ## 🔧 Customization
