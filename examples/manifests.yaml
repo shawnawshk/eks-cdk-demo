@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pod-identity-demo
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: s3-reader-sa
+  namespace: pod-identity-demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-cli-demo
+  namespace: pod-identity-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aws-cli-demo
+  template:
+    metadata:
+      labels:
+        app: aws-cli-demo
+    spec:
+      serviceAccountName: s3-reader-sa
+      containers:
+        - name: aws-cli
+          image: amazon/aws-cli:latest
+          command: ["sleep", "infinity"]
