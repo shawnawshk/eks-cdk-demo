@@ -109,7 +109,7 @@ Before submitting a PR:
 1. **Sync with upstream**:
    ```bash
    git fetch upstream
-   git rebase upstream/master
+   git rebase upstream/main
    ```
 
 2. **Push to your fork**:
