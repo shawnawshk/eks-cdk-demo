@@ -26,7 +26,7 @@ This project uses a modular approach with three interdependent CloudFormation st
          ▼
 ┌────────────────┐
 │ EksAddonsStack │
-│   (6 Addons)   │
+│   (7 Addons)   │
 └────────────────┘
 ```
 
@@ -49,15 +49,18 @@ This project uses a modular approach with three interdependent CloudFormation st
 - **Access**: Configurable IAM role/user access with AWS managed policies
 
 #### 3. EksAddonsStack
-Six core addons (AWS managed addons automatically use the default/recommended version for K8s 1.35):
+Seven core addons (AWS managed addons automatically use the default/recommended version for K8s 1.35):
 - **VPC CNI**: Pod networking (AWS managed addon)
 - **CoreDNS**: DNS resolution (AWS managed addon)
 - **kube-proxy**: Network proxy (AWS managed addon)
 - **EBS CSI Driver**: Persistent storage with IRSA (AWS managed addon)
 - **AWS Load Balancer Controller**: ALB/NLB integration with IRSA (Helm chart)
 - **Metrics Server**: Resource metrics (AWS managed addon)
+- **EKS Pod Identity Agent**: IAM roles for service accounts via EKS Pod Identity (AWS managed addon)
 
 > **Note**: Addon versions are automatically managed by AWS and will use the default recommended version compatible with your Kubernetes version. This ensures you always get tested, compatible versions without manual version tracking.
+
+> **EKS Pod Identity vs IRSA**: This cluster includes the EKS Pod Identity Agent, which is the modern approach for granting AWS permissions to Kubernetes workloads. Currently, EBS CSI Driver and ALB Controller still use IRSA (IAM Roles for Service Accounts) as shown in the code. EKS Pod Identity simplifies IAM integration by allowing you to manage permissions directly through the EKS API without OIDC configuration. You can use either approach based on your needs.
 
 ## 📋 Prerequisites
 

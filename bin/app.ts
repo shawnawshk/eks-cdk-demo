@@ -30,7 +30,7 @@ const eksStack = new EksClusterStack(app, 'EksClusterStack', {
 const addonsStack = new EksAddonsStack(app, 'EksAddonsStack', {
   cluster: eksStack.cluster,
   env,
-  description: 'EKS core addons (VPC CNI, CoreDNS, kube-proxy, EBS CSI, ALB Controller, Metrics Server)',
+  description: 'EKS core addons (VPC CNI, CoreDNS, kube-proxy, EBS CSI, ALB Controller, Metrics Server, Pod Identity Agent)',
 });
 
 // Explicit dependency chain

@@ -135,6 +135,14 @@ export class EksAddonsStack extends cdk.Stack {
       resolveConflicts: 'OVERWRITE',
     });
 
+    // EKS Pod Identity Agent (AWS Managed Addon)
+    // Enables EKS Pod Identity for workloads to assume IAM roles
+    new eks.CfnAddon(this, 'PodIdentityAgentAddon', {
+      clusterName: cluster.clusterName,
+      addonName: 'eks-pod-identity-agent',
+      resolveConflicts: 'OVERWRITE',
+    });
+
     // Outputs
     new cdk.CfnOutput(this, 'EbsCsiRoleArn', {
       value: ebsCsiRole.roleArn,
