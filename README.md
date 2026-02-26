@@ -176,10 +176,19 @@ eks-cdk-demo/
 │   └── eks-addons-stack.ts       # Core Kubernetes addons
 ├── examples/
 │   └── sample-app.yaml           # Sample nginx deployment
+├── docs/
+│   └── CLUSTER_ACCESS.md         # Cluster access configuration guide
 ├── package.json                  # Node.js dependencies
 ├── tsconfig.json                 # TypeScript configuration
 └── cdk.json                      # CDK configuration
 ```
+
+### Important Notes
+
+- **`cdk.context.json`** is gitignored to avoid committing account-specific cache data
+- All AWS account/region references use environment variables (`CDK_DEFAULT_ACCOUNT`, `CDK_DEFAULT_REGION`)
+- No hardcoded credentials, ARNs, or account IDs in source code
+- IAM role access is configurable via CDK context or environment variables
 
 ## 🧪 Testing the Cluster
 
