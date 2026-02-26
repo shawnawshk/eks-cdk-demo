@@ -25,6 +25,7 @@ export class EksClusterStack extends cdk.Stack {
       vpc,
       version: eks.KubernetesVersion.of('1.35'),
       kubectlLayer: new KubectlV35Layer(this, 'kubectl'),
+      authenticationMode: eks.AuthenticationMode.API,
       defaultCapacity: 0,
       endpointAccess: eks.EndpointAccess.PUBLIC_AND_PRIVATE,
       vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }],
@@ -51,17 +52,12 @@ export class EksClusterStack extends cdk.Stack {
       process.env.ADMIN_ROLE_ARN;
 
     if (adminRoleArn) {
-      const adminRole = iam.Role.fromRoleArn(
-        this,
-        'AdminRole',
-        adminRoleArn,
-        { mutable: false }
-      );
-
-      this.cluster.awsAuth.addRoleMapping(adminRole, {
-        groups: ['system:masters'],
-        username: 'cluster-admin',
-      });
+      // Use EKS access entry API (modern approach) instead of ConfigMap
+      this.cluster.grantAccess('ClusterAdminAccess', adminRoleArn, [
+        eks.AccessPolicy.fromAccessPolicyName('AmazonEKSClusterAdminPolicy', {
+          accessScopeType: eks.AccessScopeType.CLUSTER,
+        }),
+      ]);
 
       new cdk.CfnOutput(this, 'AdminRoleArn', {
         value: adminRoleArn,

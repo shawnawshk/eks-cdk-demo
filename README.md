@@ -42,10 +42,11 @@ This project uses a modular approach with three interdependent CloudFormation st
 #### 2. EksClusterStack
 - **Kubernetes Version**: 1.35 (latest)
 - **AMI**: Amazon Linux 2023 (AL2023_X86_64_STANDARD)
+- **Authentication Mode**: API (modern EKS access entry APIs)
 - **Node Group**: 2x t3.medium instances
 - **Storage**: 100GB EBS per node
 - **Networking**: Private subnets with public + private endpoint access
-- **Access**: IAM role mapping for kubectl access
+- **Access**: Configurable IAM role/user access with AWS managed policies
 
 #### 3. EksAddonsStack
 Six core addons (AWS managed addons automatically use the default/recommended version for K8s 1.35):
@@ -220,14 +221,20 @@ kubectl delete -f examples/sample-app.yaml
 
 ### Update Kubernetes Version
 
-Edit `lib/eks-cluster-stack.ts`:
+Currently deployed: **1.35**
+
+To upgrade to a newer version in the future, edit `lib/eks-cluster-stack.ts`:
 
 ```typescript
-version: eks.KubernetesVersion.of('1.35'),
-kubectlLayer: new KubectlV35Layer(this, 'kubectl'),
+version: eks.KubernetesVersion.of('1.35'), // Current version
+kubectlLayer: new KubectlV35Layer(this, 'kubectl'), // Current layer
+
+// To upgrade, change both to the new version:
+// version: eks.KubernetesVersion.of('1.36'),
+// kubectlLayer: new KubectlV36Layer(this, 'kubectl'),
 ```
 
-Then update addon versions in `lib/eks-addons-stack.ts` for compatibility.
+**Note**: AWS managed addon versions are automatically selected to be compatible with your Kubernetes version, so no manual addon version updates are needed.
 
 ### Change Instance Type
 
@@ -269,17 +276,12 @@ cdk deploy EksClusterStack
 If you absolutely need to hardcode, edit `lib/eks-cluster-stack.ts`:
 
 ```typescript
-const yourRole = iam.Role.fromRoleArn(
-  this,
-  'YourRole',
-  'arn:aws:iam::ACCOUNT-ID:role/YourRoleName',
-  { mutable: false }
-);
-
-this.cluster.awsAuth.addRoleMapping(yourRole, {
-  groups: ['system:masters'],
-  username: 'your-user',
-});
+// Using modern EKS access entry API
+this.cluster.grantAccess('YourRoleAccess', 'arn:aws:iam::ACCOUNT-ID:role/YourRoleName', [
+  eks.AccessPolicy.fromAccessPolicyName('AmazonEKSClusterAdminPolicy', {
+    accessScopeType: eks.AccessScopeType.CLUSTER,
+  }),
+]);
 ```
 
 **Find Your Current Role:**
